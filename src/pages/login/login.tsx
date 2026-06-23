@@ -1,8 +1,48 @@
-import { Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Flex,
+  Form,
+  Input,
+  Layout,
+  Space,
+} from "antd";
 import { LockFilled, LockOutlined, UserOutlined } from "@ant-design/icons";
 import Logo from "../../components/icons/logo";
+import { useMutation } from "@tanstack/react-query";
+import type { Credentials } from "../../types";
+import { login } from "../../http/api";
+import axios from "axios";
+
+const loginUser = async (credentials: Credentials) => {
+  const { data } = await login(credentials);
+  return data;
+};
+
+const getLoginErrorMessage = (error: unknown) => {
+  if (axios.isAxiosError(error) && error.response?.data?.errors) {
+    const errors = error.response.data.errors as { msg: string }[];
+    return errors.map(({ msg }) => msg).join(", ");
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Login failed. Please try again.";
+};
 
 export default function LoginPage() {
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationKey: ["login"],
+    mutationFn: loginUser,
+    onSuccess: async () => {
+      console.log("Login successful");
+    },
+  });
+
   return (
     <Layout style={{ height: "100vh", display: "grid", placeItems: "center" }}>
       <Space direction="vertical" align="center" size={"large"}>
@@ -21,7 +61,19 @@ export default function LoginPage() {
             </Space>
           }
         >
-          <Form initialValues={{ remember: true }}>
+          <Form
+            initialValues={{ remember: true }}
+            onFinish={(values) => {
+              mutate({ email: values.username, password: values.password });
+            }}
+          >
+            {isError && (
+              <Alert
+                style={{ marginBottom: 24 }}
+                type="error"
+                message={getLoginErrorMessage(error)}
+              />
+            )}
             <Form.Item
               name={"username"}
               rules={[
@@ -44,6 +96,10 @@ export default function LoginPage() {
                   required: true,
                   message: "Please input your password",
                 },
+                {
+                  min: 8,
+                  message: "Password must be at least 8 characters long",
+                },
               ]}
             >
               <Input.Password
@@ -64,6 +120,7 @@ export default function LoginPage() {
                 type="primary"
                 htmlType="submit"
                 style={{ width: "100%" }}
+                loading={isPending}
               >
                 Log in
               </Button>
