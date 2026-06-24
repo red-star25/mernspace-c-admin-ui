@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Credentials } from "../../types";
 import { login, self } from "../../http/api";
 import axios from "axios";
+import { useAuthStore } from "../../store";
 
 const loginUser = async (credentials: Credentials) => {
   const { data } = await login(credentials);
@@ -40,6 +41,7 @@ const getSelf = async () => {
 };
 
 export default function LoginPage() {
+  const { setUser } = useAuthStore();
   const { data: selfData, refetch } = useQuery({
     queryKey: ["self"],
     queryFn: getSelf,
@@ -50,9 +52,8 @@ export default function LoginPage() {
     mutationKey: ["login"],
     mutationFn: loginUser,
     onSuccess: async () => {
-      refetch();
-      console.log("userData: ", selfData);
-      console.log("Login successful");
+      const selfDataPromise = await refetch();
+      setUser(selfDataPromise.data);
     },
   });
 
