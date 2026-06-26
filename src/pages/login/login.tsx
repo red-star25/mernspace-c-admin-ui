@@ -10,13 +10,13 @@ import {
   Space,
 } from "antd";
 import { LockFilled, LockOutlined, UserOutlined } from "@ant-design/icons";
-import Logo from "../../components/icons/logo";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Credentials } from "../../types";
 import { login, logout, self } from "../../http/api";
 import axios from "axios";
 import { useAuthStore } from "../../store";
 import { usePermission } from "../../hooks/usePermission";
+import Logo from "../../components/icons/Logo";
 
 const loginUser = async (credentials: Credentials) => {
   const { data } = await login(credentials);
