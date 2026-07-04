@@ -11,7 +11,7 @@ import {
   theme,
 } from "antd";
 import Sider from "antd/es/layout/Sider";
-import { Footer, Header } from "antd/es/layout/layout";
+import { Content, Footer, Header } from "antd/es/layout/layout";
 import Icon, { BellFilled } from "@ant-design/icons";
 import { useState } from "react";
 import Logo from "../components/icons/Logo";
@@ -133,7 +133,9 @@ const Dashboard = () => {
               </Space>
             </Flex>
           </Header>
-          <Outlet />
+          <Content style={{ margin: "24px" }}>
+            <Outlet />
+          </Content>
           <Footer style={{ textAlign: "center" }}>Mernspace Pizza Shop</Footer>
         </Layout>
       </Layout>
