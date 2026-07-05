@@ -64,8 +64,12 @@ const Users = () => {
           ]}
         ></Breadcrumb>
         {isLoading && <Skeleton active />}
-        <UsersFilter />
-        <Table dataSource={users} columns={columns}></Table>
+        <UsersFilter
+          onFilterChange={(filterName, filterValue) =>
+            console.log(filterName, filterValue)
+          }
+        />
+        <Table dataSource={users} columns={columns} rowKey={"id"}></Table>
       </Space>
     </>
   );
