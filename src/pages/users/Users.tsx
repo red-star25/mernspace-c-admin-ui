@@ -4,6 +4,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getUsers } from "../../http/api";
 import { useAuthStore } from "../../store";
+import UsersFilter from "./UsersFilter";
 const Users = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
@@ -63,6 +64,7 @@ const Users = () => {
           ]}
         ></Breadcrumb>
         {isLoading && <Skeleton active />}
+        <UsersFilter />
         <Table dataSource={users} columns={columns}></Table>
       </Space>
     </>
