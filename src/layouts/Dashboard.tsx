@@ -23,33 +23,44 @@ import GiftIcon from "../components/icons/GiftIcon";
 import { logout } from "../http/api";
 import { useMutation } from "@tanstack/react-query";
 
-const items = [
-  {
-    key: "/",
-    icon: <Icon component={Home} />,
-    label: <NavLink to={"/"}>Home</NavLink>,
-  },
-  {
-    key: "/users",
-    icon: <Icon component={UserIcon} />,
-    label: <NavLink to={"/users"}>Users</NavLink>,
-  },
-  {
-    key: "/restaurants",
-    icon: <Icon component={foodIcon} />,
-    label: <NavLink to={"/restaurants"}>Restaurants</NavLink>,
-  },
-  {
-    key: "/products",
-    icon: <Icon component={BasketIcon} />,
-    label: <NavLink to={"/products"}>Products</NavLink>,
-  },
-  {
-    key: "/promos",
-    icon: <Icon component={GiftIcon} />,
-    label: <NavLink to={"/promos"}>Promos</NavLink>,
-  },
-];
+const getMenuItems = (role: string) => {
+  const baseItems = [
+    {
+      key: "/",
+      icon: <Icon component={Home} />,
+      label: <NavLink to={"/"}>Home</NavLink>,
+    },
+
+    {
+      key: "/restaurants",
+      icon: <Icon component={foodIcon} />,
+      label: <NavLink to={"/restaurants"}>Restaurants</NavLink>,
+    },
+    {
+      key: "/products",
+      icon: <Icon component={BasketIcon} />,
+      label: <NavLink to={"/products"}>Products</NavLink>,
+    },
+    {
+      key: "/promos",
+      icon: <Icon component={GiftIcon} />,
+      label: <NavLink to={"/promos"}>Promos</NavLink>,
+    },
+  ];
+
+  if (role === "admin") {
+    return [
+      ...baseItems,
+      {
+        key: "/users",
+        icon: <Icon component={UserIcon} />,
+        label: <NavLink to={"/users"}>Users</NavLink>,
+      },
+    ];
+  }
+
+  return baseItems;
+};
 
 const Dashboard = () => {
   const { logout: logoutFromStore } = useAuthStore();
@@ -86,7 +97,7 @@ const Dashboard = () => {
             theme="light"
             defaultSelectedKeys={["/"]}
             mode="inline"
-            items={items}
+            items={getMenuItems(user.role)}
           />
         </Sider>
         <Layout>
