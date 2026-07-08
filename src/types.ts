@@ -16,3 +16,12 @@ export type Tenant = {
   address: string;
   name: string;
 };
+
+export type CreateUserData = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  role: string;
+  tenantId: number;
+};

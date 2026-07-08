@@ -10,13 +10,16 @@ import {
 } from "antd";
 import { PlusOutlined, RightOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getUsers } from "../../http/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createUser, getUsers } from "../../http/api";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
 import UserForm from "./forms/UserForm";
+import type { CreateUserData } from "../../types";
 const Users = () => {
+  const [form] = Form.useForm();
+  const queryClient = useQueryClient();
   const {
     token: { colorBgLayout },
   } = theme.useToken();
@@ -25,6 +28,19 @@ const Users = () => {
     queryKey: ["users"],
     queryFn: () => {
       return getUsers().then((res) => res.data.data);
+    },
+  });
+
+  const { mutate: userMutate } = useMutation({
+    mutationKey: ["user"],
+    mutationFn: async (data: CreateUserData) =>
+      await createUser(data).then((res) => res.data.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+      form.resetFields();
+      setDrawerOpen(false);
     },
   });
 
@@ -63,6 +79,13 @@ const Users = () => {
       key: "role",
     },
   ];
+
+  const onHandleSubmit = async () => {
+    const values = await form.validateFields();
+    userMutate(values);
+    form.resetFields();
+    setDrawerOpen(false);
+  };
 
   return (
     <>
@@ -107,13 +130,25 @@ const Users = () => {
           destroyOnHidden
           extra={
             <Space>
-              <Button>Cancel</Button>
-              <Button type="primary">Submit</Button>
+              <Button
+                onClick={() => {
+                  form.resetFields();
+                  setDrawerOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" onClick={onHandleSubmit}>
+                Submit
+              </Button>
             </Space>
           }
-          onClose={() => setDrawerOpen(false)}
+          onClose={() => {
+            form.resetFields();
+            setDrawerOpen(false);
+          }}
         >
-          <Form layout="vertical">
+          <Form layout="vertical" form={form}>
             <UserForm />
           </Form>
         </Drawer>
