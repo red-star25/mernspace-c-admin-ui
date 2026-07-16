@@ -1,13 +1,29 @@
-import { Breadcrumb, Button, Drawer, Skeleton, Space, Table } from "antd";
+import {
+  Breadcrumb,
+  Button,
+  Drawer,
+  Form,
+  Skeleton,
+  Space,
+  Table,
+  theme,
+} from "antd";
 import { Link, Navigate } from "react-router-dom";
 import { PlusOutlined, RightOutlined } from "@ant-design/icons";
 import TenantFilter from "./TenantFilter";
-import { useQuery } from "@tanstack/react-query";
-import { getTenants } from "../../http/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createTenant, getTenants } from "../../http/api";
 import { useAuthStore } from "../../store";
 import { useState } from "react";
+import TenantForm from "./forms/TenantForm";
+import type { TenantData } from "../../types";
 
 const Tenants = () => {
+  const [form] = Form.useForm();
+  const queryClient = useQueryClient();
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const {
     data: tenants,
@@ -20,9 +36,21 @@ const Tenants = () => {
       return getTenants().then((res) => res.data.data);
     },
   });
+  const { mutate: tenantMutate } = useMutation({
+    mutationKey: ["tenant"],
+    mutationFn: async (data: TenantData) =>
+      await createTenant(data).then((res) => res.data.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["tenants"],
+      });
+      form.resetFields();
+      setDrawerOpen(false);
+    },
+  });
 
   const { user } = useAuthStore();
-  if (user.role !== "admin") {
+  if (user && user.role !== "admin") {
     return <Navigate to="/" replace={true} />;
   }
 
@@ -43,6 +71,14 @@ const Tenants = () => {
       key: "address",
     },
   ];
+
+  const onHandleSubmit = async () => {
+    const values = await form.validateFields();
+    tenantMutate(values);
+    form.resetFields();
+    setDrawerOpen(false);
+  };
+
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -80,15 +116,32 @@ const Tenants = () => {
               title="Create tenant"
               width={720}
               open={drawerOpen}
+              styles={{
+                body: {
+                  background: colorBgLayout,
+                },
+              }}
               destroyOnHidden
               onClose={() => setDrawerOpen(false)}
               extra={
                 <Space>
-                  <Button>Cancel</Button>
-                  <Button type="primary">Submit</Button>
+                  <Button
+                    onClick={() => {
+                      setDrawerOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="primary" onClick={onHandleSubmit}>
+                    Submit
+                  </Button>
                 </Space>
               }
-            ></Drawer>
+            >
+              <Form layout="vertical" form={form}>
+                <TenantForm />
+              </Form>
+            </Drawer>
           </>
         )}
       </Space>

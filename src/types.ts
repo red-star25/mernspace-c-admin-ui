@@ -25,3 +25,8 @@ export type CreateUserData = {
   role: string;
   tenantId: number;
 };
+
+export type TenantData = {
+  name: string;
+  address: string;
+};

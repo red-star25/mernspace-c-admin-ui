@@ -128,6 +128,7 @@ const UserForm = () => {
                       tenants?.map((tenant: Tenant) => ({
                         label: tenant.address,
                         value: tenant.id,
+                        id: tenant.id,
                       })) ?? []
                     }
                     placeholder="Select restaurant"
