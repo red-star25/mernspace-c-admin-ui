@@ -30,3 +30,8 @@ export type TenantData = {
   name: string;
   address: string;
 };
+
+export type FieldData = {
+  name: string;
+  value?: string;
+};
