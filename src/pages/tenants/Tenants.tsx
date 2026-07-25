@@ -74,8 +74,9 @@ const Tenants = () => {
       setQueryParams((prev) => ({
         ...prev,
         q: value,
+        currentPage: 1,
       }));
-    }, 1000);
+    }, 500);
   }, []);
 
   const { user } = useAuthStore();
@@ -116,6 +117,7 @@ const Tenants = () => {
       setQueryParams((prev) => ({
         ...prev,
         ...changedFiterFields,
+        currentPage: 1,
       }));
     }
   };
@@ -167,6 +169,9 @@ const Tenants = () => {
             total: tenants?.total,
             pageSize: queryParams.perPage,
             current: queryParams.currentPage,
+            showTotal: (total: number, range: number[]) => {
+              return `Showing ${range[0]}-${range[1]} of ${total} items`;
+            },
             onChange: (page) => {
               setQueryParams((prev) => ({
                 ...prev,
