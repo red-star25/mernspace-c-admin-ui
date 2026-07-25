@@ -22,10 +22,10 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { createUser, getUsers } from "../../http/api";
+import { createUser, getUsers, updateUser } from "../../http/api";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import UserForm from "./forms/UserForm";
 import type { CreateUserData, FieldData, User } from "../../types";
 import { PER_PAGE } from "../../constants";
@@ -34,6 +34,9 @@ import { debounce } from "lodash";
 const Users = () => {
   const [form] = Form.useForm();
   const [filterForm] = Form.useForm();
+  const [currentEditingUser, setCurrentEditingUser] = useState<User | null>(
+    null,
+  );
 
   const queryClient = useQueryClient();
   const {
@@ -41,6 +44,16 @@ const Users = () => {
   } = theme.useToken();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (currentEditingUser) {
+      setDrawerOpen(true);
+      form.setFieldsValue({
+        ...currentEditingUser,
+        tenantId: currentEditingUser.tenant?.id,
+      });
+    }
+  }, [currentEditingUser, form]);
 
   const [queryParams, setQueryParams] = React.useState({
     perPage: PER_PAGE,
@@ -76,6 +89,20 @@ const Users = () => {
       });
       form.resetFields();
       setDrawerOpen(false);
+    },
+  });
+
+  const { mutate: updateUserMutate } = useMutation({
+    mutationKey: ["update-user"],
+    mutationFn: async (data: CreateUserData) =>
+      await updateUser(data, currentEditingUser!.id).then(
+        (res) => res.data.data,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+      return;
     },
   });
 
@@ -124,9 +151,15 @@ const Users = () => {
   ];
 
   const onHandleSubmit = async () => {
-    const values = await form.validateFields();
-    userMutate(values);
+    await form.validateFields();
+    const isEditMode = !!currentEditingUser;
+    if (isEditMode) {
+      await updateUserMutate(form.getFieldsValue());
+    } else {
+      await userMutate(form.getFieldsValue());
+    }
     form.resetFields();
+    setCurrentEditingUser(null);
     setDrawerOpen(false);
   };
 
@@ -218,12 +251,31 @@ const Users = () => {
             },
           }}
           dataSource={users?.data}
-          columns={columns}
+          columns={[
+            ...columns,
+            {
+              title: "Actions",
+              render: (_text: string, record: User) => {
+                return (
+                  <Space>
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        setCurrentEditingUser(record);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </Space>
+                );
+              },
+            },
+          ]}
           rowKey={"id"}
         ></Table>
 
         <Drawer
-          title="Create user"
+          title={currentEditingUser ? "Edit user" : "Add user"}
           width={720}
           open={drawerOpen}
           styles={{
@@ -249,11 +301,12 @@ const Users = () => {
           }
           onClose={() => {
             form.resetFields();
+            setCurrentEditingUser(null);
             setDrawerOpen(false);
           }}
         >
           <Form layout="vertical" form={form}>
-            <UserForm />
+            <UserForm isEditMode={!!currentEditingUser} />
           </Form>
         </Drawer>
       </Space>

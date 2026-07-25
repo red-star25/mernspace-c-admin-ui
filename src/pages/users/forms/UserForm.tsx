@@ -3,7 +3,7 @@ import { Card, Col, Form, Input, Row, Select, Space } from "antd";
 import { getTenants } from "../../../http/api";
 import type { Tenant } from "../../../types";
 
-const UserForm = () => {
+const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
   const { data: tenants } = useQuery({
     queryKey: ["tenants"],
     queryFn: () => {
@@ -64,24 +64,26 @@ const UserForm = () => {
               </Col>
             </Row>
           </Card>
-          <Card title={"Security Info"}>
-            <Row gutter={20}>
-              <Col span={12}>
-                <Form.Item
-                  label={"Password"}
-                  name={"password"}
-                  rules={[
-                    {
-                      required: true,
-                      message: "Password name is required",
-                    },
-                  ]}
-                >
-                  <Input size="large" type={"password"}></Input>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
+          {!isEditMode && (
+            <Card title={"Security Info"}>
+              <Row gutter={20}>
+                <Col span={12}>
+                  <Form.Item
+                    label={"Password"}
+                    name={"password"}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Password name is required",
+                      },
+                    ]}
+                  >
+                    <Input size="large" type={"password"}></Input>
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Card>
+          )}
           <Card title={"Roles"}>
             <Row gutter={20}>
               <Col span={12}>
@@ -96,6 +98,7 @@ const UserForm = () => {
                   ]}
                 >
                   <Select
+                    id="selectBoxInUserForm"
                     size="large"
                     allowClear
                     style={{ width: "100%" }}
