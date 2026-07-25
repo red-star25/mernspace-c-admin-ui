@@ -9,6 +9,7 @@ export type User = {
   createdAt: string;
   firstName: string;
   lastName: string;
+  tenant: Tenant | null;
 };
 
 export type Tenant = {

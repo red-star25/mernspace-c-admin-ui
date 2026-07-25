@@ -4,7 +4,6 @@ import {
   Drawer,
   Flex,
   Form,
-  Skeleton,
   Space,
   Spin,
   Table,
@@ -28,8 +27,9 @@ import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
 import React, { useState } from "react";
 import UserForm from "./forms/UserForm";
-import type { CreateUserData, FieldData } from "../../types";
+import type { CreateUserData, FieldData, User } from "../../types";
 import { PER_PAGE } from "../../constants";
+import { debounce } from "lodash";
 
 const Users = () => {
   const [form] = Form.useForm();
@@ -113,6 +113,14 @@ const Users = () => {
       dataIndex: "role",
       key: "role",
     },
+    {
+      title: "Restaurant",
+      dataIndex: "tenant",
+      key: "tenant",
+      render: (_text: string, record: User) => {
+        return <div>{record.tenant?.name}</div>;
+      },
+    },
   ];
 
   const onHandleSubmit = async () => {
@@ -122,8 +130,16 @@ const Users = () => {
     setDrawerOpen(false);
   };
 
+  const debouncedQUpdate = React.useMemo(() => {
+    return debounce((value: string) => {
+      setQueryParams((prev) => ({
+        ...prev,
+        q: value,
+      }));
+    }, 1000);
+  }, []);
+
   const onFilterChange = (changedFields: FieldData[]) => {
-    console.log(changedFields);
     const changedFiterFields = changedFields
       .map((field) => {
         return {
@@ -132,11 +148,14 @@ const Users = () => {
         };
       })
       .reduce((acc, item) => ({ ...acc, [item.name]: item.value }), {});
-    console.log(changedFiterFields);
-    setQueryParams((prev) => ({
-      ...prev,
-      ...changedFiterFields,
-    }));
+    if ("q" in changedFiterFields) {
+      debouncedQUpdate(changedFiterFields.q as string);
+    } else {
+      setQueryParams((prev) => ({
+        ...prev,
+        ...changedFiterFields,
+      }));
+    }
   };
 
   return (
