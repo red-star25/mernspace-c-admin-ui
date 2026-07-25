@@ -1,4 +1,4 @@
-import { Navigate, NavLink, Outlet } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store";
 import {
   Avatar,
@@ -75,10 +75,16 @@ const Dashboard = () => {
     token: { colorBgContainer },
   } = theme.useToken();
   const { user } = useAuthStore();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   if (user === null) {
-    return <Navigate to={"/auth/login"} replace={true} />;
+    return (
+      <Navigate
+        to={`/auth/login?returnTo=${location.pathname}`}
+        replace={true}
+      />
+    );
   }
 
   return (
