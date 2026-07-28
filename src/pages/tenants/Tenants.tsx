@@ -17,11 +17,11 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { createTenant, getTenants } from "../../http/api";
+import { createTenant, getTenants, updateTenant } from "../../http/api";
 import { useAuthStore } from "../../store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TenantForm from "./forms/TenantForm";
-import type { FieldData, TenantData } from "../../types";
+import type { FieldData, Tenant, TenantData } from "../../types";
 import { PER_PAGE } from "../../constants";
 import { debounce } from "lodash";
 import React from "react";
@@ -33,11 +33,25 @@ const Tenants = () => {
     perPage: PER_PAGE,
     currentPage: 1,
   });
+  const [currentSelectedTenant, setCurrentSelectedTenant] =
+    useState<Tenant | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (currentSelectedTenant) {
+      setDrawerOpen(true);
+      form.setFieldsValue({
+        name: currentSelectedTenant.name,
+        address: currentSelectedTenant.address,
+      });
+    }
+  }, [currentSelectedTenant, form]);
+
   const queryClient = useQueryClient();
   const {
     token: { colorBgLayout },
   } = theme.useToken();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const {
     data: tenants,
     isLoading,
@@ -56,6 +70,21 @@ const Tenants = () => {
     },
     placeholderData: keepPreviousData,
   });
+
+  const { mutate: updateTenantMutate } = useMutation({
+    mutationKey: ["tenant-update"],
+    mutationFn: async (data: TenantData) =>
+      await updateTenant(data, currentSelectedTenant!.id).then(
+        (res) => res.data.data,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["tenants"],
+      });
+      return;
+    },
+  });
+
   const { mutate: tenantMutate } = useMutation({
     mutationKey: ["tenant"],
     mutationFn: async (data: TenantData) =>
@@ -124,8 +153,14 @@ const Tenants = () => {
 
   const onHandleSubmit = async () => {
     const values = await form.validateFields();
-    tenantMutate(values);
+    const isEditingMode = !!currentSelectedTenant;
+    if (isEditingMode) {
+      updateTenantMutate(form.getFieldsValue());
+    } else {
+      tenantMutate(values);
+    }
     form.resetFields();
+    setCurrentSelectedTenant(null);
     setDrawerOpen(false);
   };
 
@@ -163,7 +198,26 @@ const Tenants = () => {
         </Form>
         <Table
           dataSource={tenants?.data}
-          columns={columns}
+          columns={[
+            ...columns,
+            {
+              title: "Action",
+              render: (_text: string, record: TenantData) => {
+                return (
+                  <Space>
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        setCurrentSelectedTenant(record);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </Space>
+                );
+              },
+            },
+          ]}
           rowKey={"id"}
           pagination={{
             total: tenants?.total,
@@ -181,7 +235,7 @@ const Tenants = () => {
           }}
         ></Table>
         <Drawer
-          title="Create tenant"
+          title={!currentSelectedTenant ? "Create tenant" : "Update tenant"}
           width={720}
           open={drawerOpen}
           styles={{
@@ -190,7 +244,11 @@ const Tenants = () => {
             },
           }}
           destroyOnHidden
-          onClose={() => setDrawerOpen(false)}
+          onClose={() => {
+            form.resetFields();
+            setCurrentSelectedTenant(null);
+            setDrawerOpen(false);
+          }}
           extra={
             <Space>
               <Button
