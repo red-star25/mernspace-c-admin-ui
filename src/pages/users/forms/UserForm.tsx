@@ -4,6 +4,7 @@ import { getTenants } from "../../../http/api";
 import type { Tenant } from "../../../types";
 
 const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
+  const selectedRole = Form.useWatch("role");
   const { data: tenants } = useQuery({
     queryKey: ["tenants"],
     queryFn: () => {
@@ -105,7 +106,6 @@ const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                     options={[
                       { label: "Admin", value: "admin" },
                       { label: "Manager", value: "manager" },
-                      { label: "Customer", value: "customer" },
                     ]}
                     placeholder="Select role"
                     onChange={(selectedItem) => console.log(selectedItem)}
@@ -113,31 +113,33 @@ const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item
-                  label="Restaurant"
-                  name={"tenantId"}
-                  rules={[
-                    {
-                      required: true,
-                      message: "Restaurant name is required",
-                    },
-                  ]}
-                >
-                  <Select
-                    size="large"
-                    allowClear
-                    style={{ width: "100%" }}
-                    options={
-                      tenants?.map((tenant: Tenant) => ({
-                        label: tenant.address,
-                        value: tenant.id,
-                        id: tenant.id,
-                      })) ?? []
-                    }
-                    placeholder="Select restaurant"
-                    onChange={(selectedItem) => console.log(selectedItem)}
-                  />
-                </Form.Item>
+                {selectedRole == "manager" ? (
+                  <Form.Item
+                    label="Restaurant"
+                    name={"tenantId"}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Restaurant name is required",
+                      },
+                    ]}
+                  >
+                    <Select
+                      size="large"
+                      allowClear
+                      style={{ width: "100%" }}
+                      options={
+                        tenants?.map((tenant: Tenant) => ({
+                          label: tenant.address,
+                          value: tenant.id,
+                          id: tenant.id,
+                        })) ?? []
+                      }
+                      placeholder="Select restaurant"
+                      onChange={(selectedItem) => console.log(selectedItem)}
+                    />
+                  </Form.Item>
+                ) : null}
               </Col>
             </Row>
           </Card>
